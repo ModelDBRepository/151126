@@ -1,0 +1,876 @@
+// Network cell template
+// PyramidalCell
+// Geometry: 14 sections + axon
+// Active properties: from Poirazi et al, Neuron 2003
+// Adjusted to get more decrementing BPAP
+// BPG & VCU, 2-1-09
+
+begintemplate PyramidalCell
+public is_art
+public init, topol, basic_shape, subsets, geom, biophys
+public pre_list, connect2target,current_balance
+
+public soma, radTprox, radTmed, radTdist, lm_thick2, lm_medium2, lm_thin2
+public lm_thick1, lm_medium1, lm_thin1, oriprox1, oridist1, oriprox2, oridist2
+public axon
+public all, rad, lm, ori,xdist
+
+objref pre_list
+
+create soma, radTprox, radTmed, radTdist, lm_thick2, lm_medium2, lm_thin2
+create lm_thick1, lm_medium1, lm_thin1, oriprox1, oridist1, oriprox2, oridist2
+create axon
+
+proc init() {
+  gmaxnmda=1
+  v_init=$3
+  topol()
+  subsets()
+  geom()
+  geom_nseg()
+  biophys($1,$2,$4,$5,$6,$7,$8,$9,$10,$11,$12) //sAHP,mAHP,taucalH
+  pre_list = new List()
+  synapses(gmaxnmda)
+}
+
+
+proc topol() { local i
+  connect radTprox(0), soma(1)
+  connect radTmed(0), radTprox(1)
+  connect radTdist(0), radTmed(1)
+  connect lm_thick2(0), radTdist(1)
+  connect lm_medium2(0), lm_thick2(1)
+  connect lm_thin2(0), lm_medium2(1)
+  connect lm_thick1(0), radTdist(1)
+  connect lm_medium1(0), lm_thick1(1)
+  connect lm_thin1(0), lm_medium1(1)
+  connect oriprox1(0), soma(0)
+  connect oridist1(0), oriprox1(1)
+  connect oriprox2(0), soma(1)
+  connect oridist2(0), oriprox2(1)
+  connect axon(0), soma(1)
+  basic_shape()
+}
+
+proc basic_shape() {
+  soma {pt3dclear() pt3dadd(0, 0, 0, 1) pt3dadd(15, 0, 0, 1)}
+  radTprox {pt3dclear() pt3dadd(15, 0, 0, 1) pt3dadd(15, 30, 0, 1)}
+  radTmed {pt3dclear() pt3dadd(15, 30, 0, 1) pt3dadd(15, 60, 0, 1)}
+  radTdist {pt3dclear() pt3dadd(15, 60, 0, 1) pt3dadd(15, 90, 0, 1)}
+  lm_thick2 {pt3dclear() pt3dadd(15, 90, 0, 1) pt3dadd(45, 105, 0, 1)}
+  lm_medium2 {pt3dclear() pt3dadd(45, 105, 0, 1) pt3dadd(75, 120, 0, 1)}
+  lm_thin2 {pt3dclear() pt3dadd(75, 120, 0, 1) pt3dadd(105, 135, 0, 1)}
+  lm_thick1 {pt3dclear() pt3dadd(15, 90, 0, 1) pt3dadd(-14, 105, 0, 1)}
+  lm_medium1 {pt3dclear() pt3dadd(-14, 105, 0, 1) pt3dadd(-44, 120, 0, 1)}
+  lm_thin1 {pt3dclear() pt3dadd(-44, 120, 0, 1) pt3dadd(-89, 135, 0, 1)}
+  oriprox1 {pt3dclear() pt3dadd(0, 0, 0, 1) pt3dadd(-44, -29, 0, 1)}
+  oridist1 {pt3dclear() pt3dadd(-44, -29, 0, 1) pt3dadd(-74, -59, 0, 1)}
+  oriprox2 {pt3dclear() pt3dadd(15, 0, 0, 1) pt3dadd(60, -29, 0, 1)}
+  oridist2 {pt3dclear() pt3dadd(60, -29, 0, 1) pt3dadd(105, -59, 0, 1)}
+  axon {pt3dclear() pt3dadd(15, 0, 0, 1) pt3dadd(15, -149, 0, 1)}
+}
+
+objref all,rad, lm, ori
+proc subsets() { local i
+   all = new SectionList()
+    soma all.append()
+    radTprox all.append()
+    radTmed all.append()
+    radTdist all.append()
+    lm_thick2 all.append()
+    lm_medium2 all.append()
+    lm_thin2 all.append()
+    lm_thick1 all.append()
+    lm_medium1 all.append()
+    lm_thin1 all.append()
+    oriprox1 all.append()
+    oridist1 all.append()
+    oriprox2 all.append()
+    oridist2 all.append()
+    axon all.append()
+
+rad=new SectionList()
+   radTprox rad.append()
+    radTmed rad.append()
+    radTdist rad.append()
+
+ori=new SectionList()
+   oriprox1 ori.append()
+   oridist1 ori.append()
+  oriprox2 ori.append()  
+  oridist2 ori.append()
+   
+lm=new SectionList()
+   lm_thick1 lm.append()
+   lm_medium1 lm.append()
+   lm_thin1 lm.append()
+    lm_thick2 lm.append()
+   lm_medium2 lm.append()
+   lm_thin2 lm.append()
+
+
+
+
+
+}
+
+proc geom() {
+  soma {  L = 10  diam = 10  }
+  // SR is first 500um of apical dendrite
+  radTprox {  L = 100  diam = 4  }
+  radTmed {  L = 100  diam = 3  }
+  radTdist {  L = 200  diam = 2  }
+  // OLM is final 300um of apical dendrite
+  lm_thick2 {  L = 100  diam = 2  }
+  lm_medium2 {  L = 100  diam = 1.5  }
+  lm_thin2 {  L = 50  diam = 1  }
+  lm_thick1 {  L = 100  diam = 2  }
+  lm_medium1 {  L = 100  diam = 1.5  }
+  lm_thin1 {  L = 50  diam = 1  }
+  // Basal dendrites extend 300 um
+  oriprox1 {  L = 100  diam = 2  }
+  oridist1 {  L = 200  diam = 1.5  }
+  oriprox2 {  L = 100  diam = 2  }
+  oridist2 {  L = 200  diam = 1.5  }
+  // Short section of axon
+  axon {  L = 150  diam = 1  }
+}
+
+external lambda_f
+
+proc geom_nseg() {
+  forsec all { nseg = int((L/(0.1*lambda_f(100))+.9)/2)*2 + 1  }
+}
+
+
+
+proc biophys() {
+
+	Rm_axon = 28000	// Ohm.cm^2 (Migliore value)
+	Rm_soma = 28000	// Ohm.cm^2 (Migliore value)
+     Rm_trunk=25000
+     Rm_non_trunk= 25000
+     Rm_dend=25000
+
+     Ra_soma=Ra_basal=Ra_trunk=Ra_non_trunk=Ra_dend=150
+     Ra_axon=50
+
+     clesius=34
+
+    Cm_axon =1  
+    Cm_soma=1
+    Cm_trunk=28/25  
+    Cm_non_trunk=28/25  
+    Cm_dend=28/25  
+   
+      crebsAHP=$1 
+      crebmAHP=$2 
+      tauca=$3
+     
+     
+   soma_caL =3*$10  
+   soma_car =0.2*0.0005 // for dendrite
+   gsomacar =0.0005
+   soma_calH =$10
+   soma_caT =$9
+   soma_km=0.001  
+    mykca_init =0.2
+    soma_kca =0.003
+    soma_kap =$6
+    gh_soma = $8 
+     soma_kad =$7
+
+  gna=0.018
+   gkdr=0.01
+   gnadend=0.018
+   gkdrdend=0.01
+   gnanosoma=0.018
+   gkdrnosoma=0.01
+   AXKdr=1
+   AXNa=1
+   qqa=7.2
+
+
+thnax=-30
+qanax=7.5
+thinfnax=-50
+qinfnax=2 
+
+thna3=$4
+qana3=qqa
+thinfna3=-50
+qinfna3=2
+
+thna3dend =$5
+qana3dend=qqa
+thinfna3dend=-50
+qinfna3dend=2
+
+thinfna3nosoma=-50
+qinfna3nosoma=2
+thna3nosoma =$5
+qana3nosoma=qqa
+
+thna3dist = $5
+qana3dist=qqa
+qinfna3dist=2
+thinfna3dist=-50
+
+shift=$11
+shiftkm=shift
+ shiftkap=shift
+shiftkad=shift
+shifth=shift
+
+
+  forsec "soma" {  
+        
+           insert na3
+               gbar_na3=gna
+               qa_na3=qana3
+               tha_na3=thna3
+	         qinf_na3=qinfna3
+	         thinf_na3=thinfna3
+               sh_na3=shift
+            
+
+	    	insert kdr
+            	gkdrbar_kdr=gkdr
+                   sh_kdr=shift
+
+          		
+
+            insert pas    // leak conductance
+                    g_pas = 1/Rm_soma        
+                    e_pas = v_init
+                    Ra    = Ra_soma
+                    cm= Cm_soma
+
+               
+    
+           insert h     // h current 
+                    ghdbar_h = gh_soma
+                   vhalf_h = -73
+                   sh_h=shifth
+
+
+            insert kap  // proximal A current
+                   gkabar_kap = soma_kap
+                   ek         = -80
+                   sh_kap=shiftkap
+
+
+            insert km  // m-type potassium current
+                   gbar_km    = soma_km
+                   ek         = -80 
+                   sh_km=shiftkm
+
+           
+            insert cal // HVA Ca++-L type current
+                   gcalbar_cal = soma_caL
+           
+            insert cat // LVA Ca++-T type current
+                   gcatbar_cat = soma_caT
+
+            insert somacar // HVAm Ca++-R type current
+                   gcabar_somacar = gsomacar
+            
+            insert kca   // K(Ca) sAHP potassium type current
+                   gbar_kca = 5*soma_kca*crebsAHP
+         
+            insert mykca // K(Ca) mAHP potassium type current
+	           gkbar_mykca = mykca_init*crebmAHP        
+        
+            insert cad  // calcium pump/buffering mechanism        	        	
+              
+  	}
+
+  	
+  	radTprox {
+
+          
+		insert car
+		gcabar_car = soma_car
+		
+		
+		insert cad			// calcium pump/buffering mechanism
+
+		insert kca			// slow AHP K+ current
+		gbar_kca = 5*soma_kca*crebsAHP		// varies depending on distance from 0.5*0.0001 to 5*0.0001
+
+       	insert mykca  			// medium AHP K++ current (BPG)
+       	gkbar_mykca = 0.5*mykca_init*crebmAHP
+		
+    		         
+
+	      insert na3
+	         gbar_na3=gna
+               tha_na3     = thna3   
+               qa_na3= qana3
+               qinf_na3=qinfna3
+               thinf_na3=thinfna3
+               sh_na3=shift
+
+
+
+          insert kdr
+          gkdrbar_kdr=gkdr 
+          sh_kdr=shift
+
+
+         insert pas // leak conductance
+                    g_pas     =  1/Rm_trunk  
+                    e_pas          = v_init
+                    Ra             = Ra_trunk
+                    cm             = Cm_trunk
+
+
+	
+  	}
+  
+ 	radTmed {
+
+
+		insert car			// HVAm Ca++-R type current
+		gcabar_car = soma_car
+		
+		 
+		insert cad			// calcium pump/buffering mechanism
+		
+		insert kca			// slow AHP K+ current
+		gbar_kca = 5*soma_kca*crebsAHP		// varies depending on distance from 0.5*0.0001 to 5*0.0001
+
+       	insert mykca  			// medium AHP K++ current (BPG)
+       	gkbar_mykca = 0.5*mykca_init*crebmAHP
+
+               
+            insert na3
+              tha_na3     = thna3nosoma  
+              qa_na3= qana3nosoma
+              gbar_na3=gnanosoma
+		 qinf_na3=qinfna3nosoma
+             thinf_na3=thinfna3nosoma
+              sh_na3=shift
+
+
+         insert kdr
+          gkdrbar_kdr=gkdrnosoma 
+         sh_kdr=shift
+
+          	insert pas 	
+           g_pas=1/Rm_trunk
+		Ra = Ra_trunk
+            cm  = Cm_trunk
+
+        
+
+
+		// leak conductance
+  	}
+  	
+  	radTdist {
+     
+
+		insert car
+		gcabar_car = soma_car
+				 
+		insert cad			// calcium pump/buffering mechanism
+
+		insert kca			// slow AHP K+ current
+		gbar_kca = 5*soma_kca*crebsAHP		// varies depending on distance from 0.5*0.0001 to 5*0.0001
+
+       		insert mykca  			// medium AHP K++ current (BPG)
+       		gkbar_mykca =0.5* mykca_init*crebsAHP
+        
+
+	 insert kdr
+       gkdrbar_kdr=gkdrnosoma 
+       sh_kdr=shift
+
+            insert na3
+              tha_na3     = thna3nosoma  
+              qa_na3= qana3nosoma
+              gbar_na3=gnanosoma
+		 qinf_na3=qinfna3nosoma
+             thinf_na3=thinfna3nosoma
+              sh_na3=shift
+
+
+   
+          	insert pas 			
+             g_pas=1/Rm_trunk
+            Ra = Ra_trunk
+            cm  = Cm_trunk
+
+      
+
+
+  	}
+  
+  forsec lm	 {
+
+      
+            insert na3
+              tha_na3     = thna3dist  
+              qa_na3= qana3dist
+              gbar_na3=gnanosoma
+		 qinf_na3=qinfna3dist
+             thinf_na3=thinfna3dist
+             sh_na3=shift
+
+           
+
+         insert kdr
+          gkdrbar_kdr=gkdrnosoma 
+          sh_kdr=shift
+
+
+
+            insert cat // LVA Ca++-T type current
+                   gcatbar_cat = 3*soma_caT
+
+           insert car
+		   gcabar_car =0.5* soma_car
+				 
+                   
+            insert mykca // K(Ca) mAHP potassium type current
+	           gkbar_mykca =0.5* mykca_init*crebmAHP   
+   
+
+             insert pas 			// passive properties
+                g_pas          = 1/Rm_non_trunk
+                Ra = Ra_non_trunk
+                cm=Cm_non_trunk
+
+     
+         
+          
+  	}
+  	
+  	
+
+
+  	oriprox1 {
+           
+
+          insert h     			// h current according to Migliore et al. 2004 
+		ghdbar_h = gh_soma
+		vhalfl_h = -73
+
+	
+		insert car
+		gcabar_car = soma_car
+		
+		insert calH
+		gcalbar_calH = 0.1*soma_calH	// varies from .1*0.00031635 to 4.6*0.00031635 as distance increases
+		
+		insert cat
+		gcatbar_cat = soma_caT
+ 
+		insert cad			// calcium pump/buffering mechanism
+		insert kca			// slow AHP K+ current
+		gbar_kca = 5*soma_kca*crebsAHP		// varies depending on distance from 0.5*0.0001 to 5*0.0001
+       		insert mykca  			// medium AHP K++ current (BPG)
+       		gkbar_mykca = 0.5*mykca_init*crebmAHP
+
+             
+		
+          	insert kap               	// Inserting A-current
+   		gkabar_kap = soma_kap			//0.0075
+   		sh_kap=shiftkap
+
+   		insert kad
+   		gkabar_kad = 0
+            sh_kad=shiftkad
+
+          insert na3dend
+	    insert kdr
+          gbar_na3dend=gnadend
+          gkdrbar_kdr=gkdrdend
+         sh_kdr=shift
+         sh_na3dend=shift
+
+                              
+          	insert pas 		
+        g_pas=1/Rm_dend
+          Ra = Ra_dend
+          cm  = Cm_dend
+  
+
+	
+
+  	}
+  
+  	oridist1 {
+
+
+            insert h     			// h current according to Migliore et al. 2004 
+		ghdbar_h = 2*gh_soma
+		vhalfl_h = -81
+              sh_h=shifth
+
+		
+		insert car
+		gcabar_car = soma_car
+		
+		insert calH
+		gcalbar_calH = 0.1*soma_calH	// varies from 4.6*0.00031635 to 0.1*0.00031635
+		
+		insert cat
+		gcatbar_cat = soma_caT
+ 
+		insert cad			// calcium pump/buffering mechanism
+		insert kca			// slow AHP K+ current
+		gbar_kca = 5*soma_kca*crebsAHP		// varies depending on distance from 0.5*0.0001 to 5*0.0001
+
+       		insert mykca  			// medium AHP K++ current (BPG)
+       		gkbar_mykca = 0.5*mykca_init*crebmAHP
+		
+          	insert kap               	// Inserting A-current
+   		gkabar_kap = soma_kap	
+           sh_kap=shiftkap
+		
+   		
+   		insert kad
+   		gkabar_kad = 0
+            sh_kad=shiftkad
+
+
+          insert na3dend
+	    insert kdr
+          gbar_na3dend=gnadend
+          gkdrbar_kdr=gkdrdend
+          sh_kdr=shift
+          sh_na3dend=shift
+
+
+        
+   	
+          	insert pas 		
+       g_pas=1/Rm_dend
+        Ra = Ra_dend
+        cm  = Cm_dend
+  
+
+  	}
+  
+  	oriprox2 {
+
+            	insert h     			// h current according to Migliore et al. 2004 
+		ghdbar_h = gh_soma
+		vhalfl_h = -73
+               sh_h=shifth
+
+
+		insert car
+		gcabar_car = soma_car
+		
+		insert calH
+		gcalbar_calH = 0.1*soma_calH	// varies from .1*0.00031635 to 4.6*0.00031635 as distance increases
+		
+		insert cat
+		gcatbar_cat = soma_caT
+ 
+		insert cad			// calcium pump/buffering mechanism
+		insert kca			// slow AHP K+ current
+		gbar_kca = 5*soma_kca*crebsAHP		// varies depending on distance from 0.5*0.0001 to 5*0.0001
+       		insert mykca  			// medium AHP K++ current (BPG)
+       		gkbar_mykca = 0.5*mykca_init*crebmAHP
+
+         	insert kap               	// Inserting A-current
+   		gkabar_kap = soma_kap			//0.0075
+            sh_kap=shiftkap
+		
+    
+   		insert kad
+   		gkabar_kad = 0
+            sh_kad=shiftkad
+
+   
+          	  insert na3dend
+	    insert kdr
+          gbar_na3dend=gnadend
+          gkdrbar_kdr=gkdrdend
+           sh_kdr=shift
+           sh_na3dend=shift
+
+
+                    
+          	insert pas 		
+      g_pas=1/Rm_dend
+       Ra = Ra_dend
+       cm  = Cm_dend
+  
+       	
+  	}
+  	
+  	oridist2 {
+
+            	insert h     			// h current according to Migliore et al. 2004 
+		ghdbar_h = 2*gh_soma
+		vhalfl_h = -81
+             sh_h=shifth
+
+		insert car
+		gcabar_car = soma_car
+		
+		insert calH
+		gcalbar_calH = 0.1*soma_calH	// varies from 4.6*0.00031635 to 0.1*0.00031635
+		
+		insert cat
+		gcatbar_cat = soma_caT
+ 
+		insert cad			// calcium pump/buffering mechanism
+
+		insert kca			// slow AHP K+ current
+		gbar_kca = 5*soma_kca*crebsAHP		// varies depending on distance from 0.5*0.0001 to 5*0.0001
+
+          		insert mykca  			// medium AHP K++ current (BPG)
+       		gkbar_mykca =0.5* mykca_init*crebmAHP
+        
+    	     insert kap               	// Inserting A-current
+   		gkabar_kap = soma_kap			//0.0075
+             ek=-80
+   		sh_kap=shiftkap
+
+   		insert kad
+   		gkabar_kad = 0
+   		sh_kad=shiftkad
+  
+
+            insert na3dend
+	    insert kdr
+          gbar_na3dend=gnadend
+          gkdrbar_kdr=gkdrdend
+          sh_kdr=shift
+          sh_na3dend=shift
+
+
+
+                    
+          	insert pas 		
+       g_pas=1/Rm_dend
+        Ra = Ra_dend
+         cm  = Cm_dend
+    	}
+  
+  	axon {  
+
+
+          insert nax
+	        gbar_nax=gna
+		  tha_nax     = thnax   
+               qa_nax= qanax
+               qinf_nax=qinfnax
+               thinf_nax=thinfnax
+              sh_nax=shift
+
+
+		insert kdr
+             gkdrbar_kdr=gkdr
+             sh_kdr=shift
+
+
+             insert pas  // leak conductance
+                    g_pas      = 1/Rm_axon  //    1.4286e-5 
+                    e_pas       = v_init
+                    Ra          = Ra_axon
+                    cm          = Cm_axon
+
+      
+
+             insert km  // m-type potassium current
+                    gbar_km     = 3*soma_km
+                    ek          = -80
+                    sh_km=shiftkm
+
+
+             insert kap  // proximal A current
+                   gkabar_kap = soma_kap
+                   ek         = -80
+                   sh_kap=shiftkap
+
+           
+  	}
+
+  	
+  	forsec all {
+		ek = -80
+		ena = 50
+		e_pas = v_init
+		
+
+  	}
+
+forall if (ismembrane("kap") ) {  
+          ek=-80     
+     }
+
+forall if (ismembrane("kad") ) {  
+          ek=-80     
+     }
+
+forall if (ismembrane("calH") ) {  
+          mytau_calH = tauca      
+     }
+
+ if (ismembrane("h") ) {ehd_h=-10}
+
+}
+
+  forall if(ismembrane("ca_ion")) {
+      eca = 140
+      ion_style("ca_ion",0,1,0,0,0)
+      vshift_ca = 0
+    }
+
+
+obfunc connect2target() { localobj nc //$o1 target point process, optional $o2 returned NetCon
+  soma nc = new NetCon(&v(1), $o1)
+  nc.threshold = -10
+  if (numarg() == 2) { $o2 = nc } // for backward compatibility
+  return nc
+}
+
+
+objref syn_
+proc synapses() {
+  	/* E0 */   	lm_thick1 syn_ = new MyExp2Syn(0.5)  pre_list.append(syn_)	// AMPA		EC input
+    	syn_.tau1 = 0.5
+    	syn_.tau2 = 3
+    	syn_.e = 0
+  	/* E1 */   	lm_thick2 syn_ = new MyExp2Syn(0.5)  pre_list.append(syn_)	// AMPA		EC input
+    	syn_.tau1 = 0.5
+    	syn_.tau2 = 3
+    	syn_.e = 0
+  	/* E2 */   	radTmed syn_ = new MyExp2Syn(0.5)  pre_list.append(syn_)	// AMPA		CA3 Schaffer collaterals
+    	syn_.tau1 = 0.5
+    	syn_.tau2 = 3
+    	syn_.e = 0
+  	/* E3 */   	radTmed syn_ = new NMDA(0.5)  pre_list.append(syn_)		// NMDA		CA3 Schaffer collaterals
+   /* 	syn_.tcon = 2.3	
+    	syn_.tcoff = 100
+*/
+    	//syn_.gNMDAmax = $1	// use connection weight to determine max cond
+  	/* E4 */   	radTprox syn_ = new MyExp2Syn(0.5)  pre_list.append(syn_)	// AMPA		PC recurrent input
+    	syn_.tau1 = 0.5
+    	syn_.tau2 = 3
+    	syn_.e = 0
+  	/* I5 */   	soma syn_ = new MyExp2Syn(0.5)  pre_list.append(syn_)		// GABA-A	B cell
+    	syn_.tau1 = 1
+    	syn_.tau2 = 8
+    	syn_.e = -75
+  	/* I6 */   	axon syn_ = new MyExp2Syn(0.1)  pre_list.append(syn_)		// GABA-A	AA cell
+    	syn_.tau1 = 1
+    	syn_.tau2 = 8
+    	syn_.e = -75
+  	/* I7 */	lm_thick1 syn_ = new MyExp2Syn(0.5) pre_list.append(syn_)	// GABA-A	OLM cells
+    	syn_.tau1 = 1
+    	syn_.tau2 = 8
+    	syn_.e = -75
+  	/* I8 */	lm_thick2 syn_ = new MyExp2Syn(0.5) pre_list.append(syn_)	// GABA-A	OLM cells
+    	syn_.tau1 = 1
+    	syn_.tau2 = 8
+    	syn_.e = -75
+  	/* I9 */	lm_thick1 syn_ = new MyExp2Syn(0.5) pre_list.append(syn_)	// GABA-B	OLM cells
+    	syn_.tau1 = 35
+    	syn_.tau2 = 100
+    	syn_.e = -75
+  	/* I10 */	lm_thick2 syn_ = new MyExp2Syn(0.5) pre_list.append(syn_)	// GABA-B	OLM cells
+    	syn_.tau1 = 35
+    	syn_.tau2 = 100
+    	syn_.e = -75
+  	/* I11 */   	radTmed syn_ = new MyExp2Syn(0.8)  pre_list.append(syn_)	// GABA-A	BS cells
+    	syn_.tau1 = 1
+    	syn_.tau2 = 8
+    	syn_.e = -75
+  	/* I12 */   	radTmed syn_ = new MyExp2Syn(0.7)  pre_list.append(syn_)	// GABA-A	BS cells
+    	syn_.tau1 = 1
+    	syn_.tau2 = 8
+    	syn_.e = -75
+  	/* I13 */   	radTmed syn_ = new MyExp2Syn(0.6)  pre_list.append(syn_)	// GABA-A	BS cells
+    	syn_.tau1 = 1
+    	syn_.tau2 = 8
+    	syn_.e = -75
+  	/* I14 */   	radTmed syn_ = new MyExp2Syn(0.4)  pre_list.append(syn_)	// GABA-A	BS cells
+   	syn_.tau1 = 1
+    	syn_.tau2 = 8
+    	syn_.e = -75
+  	/* I15 */   	radTmed syn_ = new MyExp2Syn(0.3)  pre_list.append(syn_)	// GABA-A	BS cells
+    	syn_.tau1 = 1
+    	syn_.tau2 = 8
+    	syn_.e = -75
+  	/* I16 */   	radTmed syn_ = new MyExp2Syn(0.2)  pre_list.append(syn_)	// GABA-A	BS cells
+    	syn_.tau1 = 1
+    	syn_.tau2 = 8
+    	syn_.e = -75
+  	/* I17 */   	radTmed syn_ = new MyExp2Syn(0.8)  pre_list.append(syn_)	// GABA-B	BS cells
+    	syn_.tau1 = 35
+    	syn_.tau2 = 100
+    	syn_.e = -75
+  	/* I18 */   	radTmed syn_ = new MyExp2Syn(0.7)  pre_list.append(syn_)	// GABA-B	BS cells
+    	syn_.tau1 = 35
+    	syn_.tau2 = 100
+    	syn_.e = -75
+  	/* I19 */   	radTmed syn_ = new MyExp2Syn(0.6)  pre_list.append(syn_)	// GABA-B	BS cells
+    	syn_.tau1 = 35
+    	syn_.tau2 = 100
+    	syn_.e = -75
+  	/* I20 */   	radTmed syn_ = new MyExp2Syn(0.4)  pre_list.append(syn_)	// GABA-B	BS cells
+    	syn_.tau1 = 35
+    	syn_.tau2 = 100
+    	syn_.e = -75
+  	/* I21 */   	radTmed syn_ = new MyExp2Syn(0.3)  pre_list.append(syn_)	// GABA-B	BS cells
+    	syn_.tau1 = 35
+    	syn_.tau2 = 100
+    	syn_.e = -75
+  	/* I22 */   	radTmed syn_ = new MyExp2Syn(0.2)  pre_list.append(syn_)	// GABA-B	BS cells
+    	syn_.tau1 = 35
+    	syn_.tau2 = 100
+    	syn_.e = -75
+    	/* E23 */   	radTmed syn_ = new STDPE2(0.5)  pre_list.append(syn_)	// AMPA modifiable	CA3 Schaffer collaterals
+	syn_.tau1 = 0.5
+	syn_.tau2 = 3
+	syn_.e = 0
+}
+
+
+
+func is_art() { return 0 }
+
+
+proc current_balance() {
+
+  finitialize($1)
+  fcurrent()
+  printf("Balancing each compartment to %d mV\n", $1)
+  forall {
+      
+      for (x) {         
+        if (ismembrane("na_ion") && ismembrane("ca_ion") && ismembrane("Ca_ion") && (ismembrane("k_ion"))) {
+            e_pas(x)=(ina(x)+ik(x)+ica(x)+iCa(x)+g_pas(x)*v(x))/g_pas(x) 
+             if (ismembrane("h")) {e_pas(x)=e_pas(x)+i_h(x)/g_pas(x)}
+
+        } else if (ismembrane("na_ion") && ismembrane("ca_ion") && (ismembrane("k_ion"))){
+            e_pas(x)=(ina(x)+ik(x)+ica(x)+g_pas(x)*v(x))/g_pas(x) 
+             if (ismembrane("h")) {e_pas(x)=e_pas(x)+i_h(x)/g_pas(x)}
+
+        } else if (ismembrane("na_ion") && (ismembrane("k_ion"))) {
+            e_pas(x)=(ina(x)+ik(x)+g_pas(x)*v(x))/g_pas(x)
+             if (ismembrane("h")) {e_pas(x)=e_pas(x)+i_h(x)/g_pas(x)}
+
+          
+        } else {
+         // print "simply assigning v(x)"
+          e_pas(x)=v(x)
+        }
+      
+    }
+  }
+
+ 
+
+}
+
+endtemplate PyramidalCell
+
