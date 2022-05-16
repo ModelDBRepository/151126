@@ -90,8 +90,13 @@ FUNCTION invl(mean (ms)) (ms) {
     :  printf(" tspike %f\t invl %f\t t %f  \n",tspike, invl,t)
 }
 VERBATIM
+#ifndef NRN_VERSION_GTEQ_8_2_0
 double nrn_random_pick(void* r);
 void* nrn_random_arg(int argpos);
+#define RANDCAST
+#else
+#define RANDCAST (Rand*)
+#endif
 ENDVERBATIM
 
 FUNCTION erand() {
@@ -102,7 +107,7 @@ VERBATIM
 		: each instance. However, the corresponding hoc Random
 		: distribution MUST be set to Random.normal(0, 1) (BPG)
 		*/
-		_lerand = nrn_random_pick(_p_donotuse);
+		_lerand = nrn_random_pick(RANDCAST _p_donotuse);
 	}else{
 ENDVERBATIM
 		: the old standby. Cannot use if reproducible parallel sim
