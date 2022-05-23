@@ -55,3 +55,7 @@ Questions on the NEURON simulation and MATLAB files should be addressed to
 (replace -at- with the usual @ symbol):
 danielabianchi12-at-gmail.com
 pasquale.demichele-at-unina.it
+
+CHANGELOG
+2022-05: Updated MOD files to contain valid C++ and be compatible
+         with the upcoming versions 8.2 and 9.0 of NEURON.
